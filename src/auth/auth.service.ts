@@ -85,8 +85,14 @@ export class AuthService {
     const access_token = this.jwtService.sign(payload);
 
     // Return user without sensitive data
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { password: _password, ...userWithoutPassword } = savedUser;
+    const {
+      password: _password,
+      is_admin: _isAdmin,
+      ...userWithoutPassword
+    } = savedUser;
+
+    void _password;
+    void _isAdmin;
 
     return {
       user: userWithoutPassword,
