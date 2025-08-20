@@ -5,6 +5,7 @@ import { APP_INTERCEPTOR, APP_FILTER } from '@nestjs/core';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
+import { CollectionsModule } from './collections/collections.module';
 import { ResponseInterceptor } from './common/interceptors/response.interceptor';
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 
@@ -23,6 +24,7 @@ import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
       logging: process.env.DB_LOGGING === 'true',
     }),
     AuthModule,
+    CollectionsModule,
   ],
   controllers: [AppController],
   providers: [
