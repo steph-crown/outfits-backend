@@ -12,7 +12,8 @@ import {
   ValidationPipe,
 } from '@nestjs/common';
 import { ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { AuthResponse, AuthService } from './auth.service';
+import { ApiSuccessResponse } from '../common/decorators/api-response.decorator';
+import { AuthService } from './auth.service';
 import { LoginDto, RegisterDto, UpdateUserDto } from './dto/auth.dto';
 
 @ApiTags('Authentication')
@@ -55,7 +56,8 @@ export class AuthController {
     description: 'User with this email already exists',
   })
   @ApiResponse({ status: 400, description: 'Invalid input data' })
-  async register(@Body() registerDto: RegisterDto): Promise<AuthResponse> {
+  @ApiSuccessResponse('User registered successfully.')
+  async register(@Body() registerDto: RegisterDto) {
     return this.authService.register(registerDto);
   }
 
@@ -90,7 +92,8 @@ export class AuthController {
   })
   @ApiResponse({ status: 401, description: 'Invalid email or password' })
   @ApiResponse({ status: 400, description: 'Invalid input data' })
-  async login(@Body() loginDto: LoginDto): Promise<AuthResponse> {
+  @ApiSuccessResponse('Login successful')
+  async login(@Body() loginDto: LoginDto) {
     return this.authService.login(loginDto);
   }
 

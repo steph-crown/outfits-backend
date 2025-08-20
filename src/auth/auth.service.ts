@@ -13,10 +13,9 @@ import { RegisterDto, LoginDto } from './dto/auth.dto';
 import { UsernameGenerator } from '../utils/username-generator';
 import { JwtPayload } from './auth.config';
 
-export interface AuthResponse {
+export interface AuthData {
   user: Partial<User>;
   access_token: string;
-  message: string;
 }
 
 @Injectable()
@@ -27,7 +26,7 @@ export class AuthService {
     private readonly jwtService: JwtService,
   ) {}
 
-  async register(registerDto: RegisterDto): Promise<AuthResponse> {
+  async register(registerDto: RegisterDto): Promise<AuthData> {
     const { email, password } = registerDto;
 
     // Check if user already exists
@@ -97,11 +96,10 @@ export class AuthService {
     return {
       user: userWithoutPassword,
       access_token,
-      message: 'User registered successfully. Please verify your email.',
     };
   }
 
-  async login(loginDto: LoginDto): Promise<AuthResponse> {
+  async login(loginDto: LoginDto): Promise<AuthData> {
     const { email, password } = loginDto;
 
     // Find user by email
@@ -141,7 +139,6 @@ export class AuthService {
     return {
       user: userWithoutPassword,
       access_token,
-      message: 'Login successful',
     };
   }
 
