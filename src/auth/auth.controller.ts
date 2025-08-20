@@ -4,17 +4,26 @@ import {
   Get,
   HttpCode,
   HttpStatus,
-  Param,
   Post,
   Put,
   Request,
+  UseGuards,
   UsePipes,
   ValidationPipe,
 } from '@nestjs/common';
-import { ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBody,
+  ApiOperation,
+  ApiResponse,
+  ApiTags,
+  ApiBearerAuth,
+} from '@nestjs/swagger';
 import { ApiSuccessResponse } from '../common/decorators/api-response.decorator';
+import { JwtAuthGuard } from './guards/auth.guard';
+import { User } from './decorators/user.decorator';
 import { AuthService } from './auth.service';
 import { LoginDto, RegisterDto, UpdateUserDto } from './dto/auth.dto';
+import { User as UserEntity } from '../entities/user.entity';
 
 @ApiTags('Authentication')
 @Controller('auth')
@@ -97,18 +106,74 @@ export class AuthController {
     return this.authService.login(loginDto);
   }
 
-  @Get('profile/:id')
-  async getProfile(@Param('id') userId: string) {
-    const user = await this.authService.getUserById(userId);
-
-    if (!user) {
-      return {
-        success: false,
-        message: 'User not found',
+  @Post('logout')
+  @UseGuards(JwtAuthGuard)
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Logout user',
+    description:
+      'Logs out the authenticated user. With JWT tokens, this is mainly for logging purposes as token invalidation is handled client-side.',
+  })
+  @ApiBearerAuth()
+  @ApiResponse({
+    status: 200,
+    description: 'Logout successful',
+    schema: {
+      example: {
+        success: true,
+        message: 'Logout successful',
         data: null,
-      };
-    }
+      },
+    },
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Unauthorized - Invalid or missing token',
+  })
+  @ApiSuccessResponse('Logout successful')
+  async logout(@User() user: UserEntity, @Request() req) {
+    // Extract token from Authorization header
+    const token = req.headers.authorization?.replace('Bearer ', '');
+    return this.authService.logout(user.id, token);
+  }
 
+  @Get('profile')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Get current user profile',
+    description: 'Get the profile of the currently authenticated user',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Profile retrieved successfully',
+    schema: {
+      example: {
+        success: true,
+        message: 'User profile retrieved successfully',
+        data: {
+          user: {
+            id: 'uuid-string',
+            email: 'sarah.johnson@example.com',
+            username: 'swift_tiger_2024',
+            first_name: 'Sarah',
+            last_name: 'Johnson',
+            profile_image_url: 'https://example.com/images/profile.jpg',
+            is_admin: false,
+            email_verified: false,
+            last_login_at: '2025-08-20T13:50:15.000Z',
+            created_at: '2025-08-20T13:47:42.000Z',
+            updated_at: '2025-08-20T13:50:15.000Z',
+          },
+        },
+      },
+    },
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Unauthorized - Invalid or missing token',
+  })
+  async getProfile(@User() user: UserEntity) {
     return {
       success: true,
       message: 'User profile retrieved successfully',
@@ -117,29 +182,34 @@ export class AuthController {
   }
 
   @Put('profile')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
   @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Update current user profile',
+    description: 'Update the profile of the currently authenticated user',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Profile updated successfully',
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Unauthorized - Invalid or missing token',
+  })
   async updateProfile(
-    @Request() req: any,
+    @User() user: UserEntity,
     @Body() updateUserDto: UpdateUserDto,
   ) {
-    // In a real implementation, you'd get userId from JWT token
-    // For now, we'll require it to be passed in the request body
-    const userId = req.user?.id || req.body.userId;
-
-    if (!userId) {
-      return {
-        success: false,
-        message: 'User ID is required',
-        data: null,
-      };
-    }
-
-    const user = await this.authService.updateProfile(userId, updateUserDto);
+    const updatedUser = await this.authService.updateProfile(
+      user.id,
+      updateUserDto,
+    );
 
     return {
       success: true,
       message: 'Profile updated successfully',
-      data: { user },
+      data: { user: updatedUser },
     };
   }
 }

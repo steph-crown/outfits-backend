@@ -12,6 +12,7 @@ import { User } from '../entities/user.entity';
 import { RegisterDto, LoginDto } from './dto/auth.dto';
 import { UsernameGenerator } from '../utils/username-generator';
 import { JwtPayload } from './auth.config';
+import { TokenBlacklistService } from './services/token-blacklist.service';
 
 export interface AuthData {
   user: Partial<User>;
@@ -24,6 +25,7 @@ export class AuthService {
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
     private readonly jwtService: JwtService,
+    private readonly tokenBlacklistService: TokenBlacklistService,
   ) {}
 
   async register(registerDto: RegisterDto): Promise<AuthData> {
@@ -202,5 +204,35 @@ export class AuthService {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { password: _userPassword, ...userWithoutPassword } = updatedUser;
     return userWithoutPassword;
+  }
+
+  async logout(userId: string, token: string): Promise<{ message: string }> {
+    try {
+      // Blacklist the JWT token
+      this.tokenBlacklistService.blacklistToken(token);
+
+      // Update user's last logout timestamp
+      await this.userRepository.update(userId, {
+        last_login_at: new Date(), // Track last activity
+      });
+
+      // Log the logout event (replace with proper logging service in production)
+      const timestamp = new Date().toISOString();
+      console.log(`[AUTH] User logout: ${userId} at ${timestamp}`);
+
+      return {
+        message: 'Logout successful. Token has been invalidated and cleared.',
+      };
+    } catch (error) {
+      // Log error but don't fail the logout process
+      console.error(`[AUTH] Logout error for user ${userId}:`, error);
+
+      // Still blacklist the token even if DB update fails
+      this.tokenBlacklistService.blacklistToken(token);
+
+      return {
+        message: 'Logout completed. Token has been invalidated.',
+      };
+    }
   }
 }

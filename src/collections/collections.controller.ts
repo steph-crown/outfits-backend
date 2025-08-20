@@ -7,7 +7,6 @@ import {
   Param,
   Delete,
   UseGuards,
-  Request,
   Query,
   ParseUUIDPipe,
 } from '@nestjs/common';
@@ -20,12 +19,14 @@ import {
   ApiQuery,
 } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/guards/auth.guard';
+import { User } from '../auth/decorators/user.decorator';
 import { CollectionsService } from './collections.service';
 import {
   CreateCollectionDto,
   UpdateCollectionDto,
   CollectionResponseDto,
 } from './dto/collection.dto';
+import { User as UserEntity } from '../entities/user.entity';
 
 @ApiTags('Collections')
 @ApiBearerAuth()
@@ -58,9 +59,9 @@ export class CollectionsController {
   })
   async create(
     @Body() createCollectionDto: CreateCollectionDto,
-    @Request() req,
+    @User() user: UserEntity,
   ) {
-    return this.collectionsService.create(req.user.userId, createCollectionDto);
+    return this.collectionsService.create(user.id, createCollectionDto);
   }
 
   @Get()
@@ -73,8 +74,8 @@ export class CollectionsController {
     description: 'Collections retrieved successfully',
     type: [CollectionResponseDto],
   })
-  async findAll(@Request() req) {
-    return this.collectionsService.findAll(req.user.userId);
+  async findAll(@User() user: UserEntity) {
+    return this.collectionsService.findAll(user.id);
   }
 
   @Get('public')
@@ -144,8 +145,11 @@ export class CollectionsController {
       },
     },
   })
-  async findOne(@Param('id', ParseUUIDPipe) id: string, @Request() req) {
-    return this.collectionsService.findOne(id, req.user.userId);
+  async findOne(
+    @Param('id', ParseUUIDPipe) id: string,
+    @User() user: UserEntity,
+  ) {
+    return this.collectionsService.findOne(id, user.id);
   }
 
   @Patch(':id')
@@ -178,13 +182,9 @@ export class CollectionsController {
   async update(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() updateCollectionDto: UpdateCollectionDto,
-    @Request() req,
+    @User() user: UserEntity,
   ) {
-    return this.collectionsService.update(
-      id,
-      req.user.userId,
-      updateCollectionDto,
-    );
+    return this.collectionsService.update(id, user.id, updateCollectionDto);
   }
 
   @Delete(':id')
@@ -209,8 +209,11 @@ export class CollectionsController {
     status: 403,
     description: 'Cannot delete collection owned by another user',
   })
-  async remove(@Param('id', ParseUUIDPipe) id: string, @Request() req) {
-    await this.collectionsService.remove(id, req.user.userId);
+  async remove(
+    @Param('id', ParseUUIDPipe) id: string,
+    @User() user: UserEntity,
+  ) {
+    await this.collectionsService.remove(id, user.id);
     return null;
   }
 }
