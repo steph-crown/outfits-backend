@@ -5,6 +5,17 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
+  // Enable CORS for mobile app development
+  app.enableCors({
+    origin: true, // Allow all origins for development
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    credentials: true,
+  });
+
+  // Set global prefix for all routes
+  app.setGlobalPrefix('api');
+
   const config = new DocumentBuilder()
     .setTitle('Outfits')
     .setDescription('Outfits API description')
