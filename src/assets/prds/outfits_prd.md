@@ -231,6 +231,7 @@ outfits {
   style_category: VARCHAR
   confidence_score: FLOAT
   analysis_data: JSONB
+  note: TEXT
   created_at: TIMESTAMP
   updated_at: TIMESTAMP
 }
@@ -416,12 +417,10 @@ Open SaveFits → Browse grid → Search bar → Results → Full view
 #### High-Risk Items
 
 1. **Share Extension Complexity**
-
    - **Risk:** Platform-specific implementation challenges
    - **Mitigation:** Start with one platform, iterate quickly
 
 2. **AI Analysis Accuracy**
-
    - **Risk:** Poor outfit detection results
    - **Mitigation:** "Save anyway" option, manual tagging
 
@@ -432,7 +431,6 @@ Open SaveFits → Browse grid → Search bar → Results → Full view
 #### Medium-Risk Items
 
 1. **User Adoption**
-
    - **Risk:** Low initial engagement
    - **Mitigation:** Focus on core value prop, gather feedback
 
