@@ -1,13 +1,15 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { APP_FILTER, APP_INTERCEPTOR } from '@nestjs/core';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { APP_INTERCEPTOR, APP_FILTER } from '@nestjs/core';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
 import { CollectionsModule } from './collections/collections.module';
-import { ResponseInterceptor } from './common/interceptors/response.interceptor';
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
+import { ResponseInterceptor } from './common/interceptors/response.interceptor';
+import { FileModule } from './file/file.module';
+import { OutfitsModule } from './outfits/outfits.module';
 
 @Module({
   imports: [
@@ -25,6 +27,8 @@ import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
     }),
     AuthModule,
     CollectionsModule,
+    OutfitsModule,
+    FileModule,
   ],
   controllers: [AppController],
   providers: [

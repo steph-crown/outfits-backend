@@ -1,13 +1,15 @@
-import { Controller, FileTypeValidator, MaxFileSizeValidator, ParseFilePipe, Post, UploadedFiles, UseInterceptors } from '@nestjs/common';
+import { Controller, FileTypeValidator, MaxFileSizeValidator, ParseFilePipe, Post, UploadedFiles, UseGuards, UseInterceptors } from '@nestjs/common';
 import { FilesInterceptor } from '@nestjs/platform-express';
-import { UploadService } from './upload.service';
+import { JwtAuthGuard } from 'src/auth/guards/auth.guard';
+import { FileService } from './file.service';
 
-@Controller('upload')
-export class UploadController {
-    constructor(private readonly uploadService: UploadService) {}
+@Controller('file')
+@UseGuards(JwtAuthGuard)
+export class FileController {
+    constructor(private readonly fileService: FileService) {}
 
-    @Post()
-    @UseInterceptors(FilesInterceptor('files')) // 'files' is the field name in your form
+    @Post('upload')
+    @UseInterceptors(FilesInterceptor('file')) // 'files' is the field name in your form
     async uploadFiles(
         @UploadedFiles(
             new ParseFilePipe({
@@ -25,9 +27,9 @@ export class UploadController {
             file: file.buffer,
         }));
 
-        const uploadedFiles = await this.uploadService.uploadMultiple(formattedFiles);
+        const uploaded_files = await this.fileService.uploadMultiple(formattedFiles);
         
-        return { uploadedFiles };
+        return { uploaded_files };
     }
 }
  

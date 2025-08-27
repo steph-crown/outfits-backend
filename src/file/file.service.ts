@@ -5,7 +5,7 @@ import { ConfigService } from '@nestjs/config';
 import { v4 as uuid } from 'uuid';
 
 @Injectable()
-export class UploadService {
+export class FileService {
     private readonly s3Client: S3Client;
 
     constructor(private readonly configService: ConfigService) {
@@ -14,16 +14,16 @@ export class UploadService {
         });
     }
 
-    async uploadMultiple(files: { fileName: string; file: Buffer; fileType: string }[]): Promise<{ randomName: string; signedUrl: string }[]> {
+    async uploadMultiple(files: { fileName: string; file: Buffer; fileType: string }[]): Promise<{ object_name: string; signed_url: string }[]> {
         const uploadPromises = files.map(async ({ fileName, file, fileType }) => {
 
             const ext = fileName.split('.').pop();
-            const randomName = `${uuid()}.${ext}`;
+            const object_name = `${uuid()}.${ext}`;
 
             await this.s3Client.send(
                 new PutObjectCommand({
                     Bucket: "outfits-app-bucket",
-                    Key: randomName,
+                    Key: object_name,
                     Body: file,
                     ContentType: fileType,
                     ContentDisposition: 'inline',
@@ -32,11 +32,11 @@ export class UploadService {
 
             const command = new GetObjectCommand({
                 Bucket: 'outfits-app-bucket',
-                Key: randomName,
+                Key: object_name,
             });
-            const signedUrl = await getSignedUrl(this.s3Client, command, { expiresIn: 3600 });
+            const signed_url = await getSignedUrl(this.s3Client, command, { expiresIn: 3600 });
 
-            return { randomName, signedUrl }
+            return { object_name, signed_url }
 
         });
 
