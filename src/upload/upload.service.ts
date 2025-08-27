@@ -12,14 +12,18 @@ export class UploadService {
         });
     }
 
-
-    async upload(fileName: string, file: Buffer) {
-        await this.s3Client.send(
+    async uploadMultiple(files: { fileName: string; file: Buffer }[]) {
+    const uploadPromises = files.map(({ fileName, file }) =>
+        this.s3Client.send(
             new PutObjectCommand({
                 Bucket: "outfits-app-bucket",
                 Key: fileName,
                 Body: file,
             }),
-        );
-    }
+        ),
+    );
+
+    // Wait for all uploads to complete
+    await Promise.all(uploadPromises);
+}
 }
