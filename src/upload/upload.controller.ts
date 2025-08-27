@@ -13,18 +13,21 @@ export class UploadController {
             new ParseFilePipe({
                 validators: [
                     new MaxFileSizeValidator({ maxSize: 10000000000000000 }), // adjust size as needed
-                    new FileTypeValidator({ fileType: 'image/png' }),
+                    new FileTypeValidator({ fileType: /(image\/jpg|image\/jpeg|image\/png)$/ }),
                 ],
             }),
-        ) files: Express.Multer.File[],
+        ) files: Express.Multer.File[]
     ) {
         // Map files to the format expected by uploadMultiple
-        const formattedFiles = files.map(file => ({
+        const formattedFiles = files.map((file) => ({
             fileName: file.originalname,
+            fileType: file.mimetype,
             file: file.buffer,
         }));
 
-        await this.uploadService.uploadMultiple(formattedFiles);
+        const uploadedFiles = await this.uploadService.uploadMultiple(formattedFiles);
+        
+        return { uploadedFiles };
     }
 }
  
