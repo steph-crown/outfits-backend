@@ -4,11 +4,11 @@ import { JwtAuthGuard } from 'src/auth/guards/auth.guard';
 import { FileService } from './file.service';
 
 @Controller('file')
-@UseGuards(JwtAuthGuard)
 export class FileController {
     constructor(private readonly fileService: FileService) {}
 
     @Post('upload')
+    @UseGuards(JwtAuthGuard)
     @UseInterceptors(FilesInterceptor('file')) // 'files' is the field name in your form
     async uploadFiles(
         @UploadedFiles(
