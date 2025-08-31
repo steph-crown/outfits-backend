@@ -1,11 +1,23 @@
-import { Controller } from '@nestjs/common';
+import { Body, Controller, Post, UseGuards } from '@nestjs/common';
+import { JwtAuthGuard } from 'src/auth/guards/auth.guard';
+import { User } from '../auth/decorators/user.decorator';
+import { User as UserEntity } from '../entities/user.entity';
+import { CreateOutfitDto } from './dto/outfit.dto';
+import { OutfitsService } from './outfits.service';
 
+@UseGuards(JwtAuthGuard)
 @Controller('outfits')
 export class OutfitsController {
+    constructor(private readonly outfitsService: OutfitsService) {}
+
+    @Post()
+    async create(
+        @Body() createOutfitDto: CreateOutfitDto,
+        @User() user: UserEntity,
+    ) {
+        return this.outfitsService.create(user.id, createOutfitDto);
+    }
 
 
 
-
-
-    
 }
