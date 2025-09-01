@@ -135,3 +135,46 @@ export class OutfitResponseDto {
   @Type(() => OutfitMediaResponseDto)
   media: OutfitMediaResponseDto[];
 }
+
+
+export class GetOutfitResponseDto {
+  @IsString()
+  id: string;
+
+  @IsUrl()
+  source_url: string;
+
+  @IsString()
+  source_type: string;
+
+  @IsString()
+  original_text: string;
+
+  @IsString()
+  thumbnail_url: string;
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  colors?: string[];
+
+  @IsOptional()
+  @IsString()
+  style_category?: string;
+
+  @IsOptional()
+  @IsString()
+  note?: string;
+
+  @IsString()
+  created_at: Date; // ISO string (or you could use Date if you prefer)
+
+  @IsString()
+  updated_at: Date;
+
+  @IsArray()
+  @IsString({ each: true })
+  tags: string[];
+
+}
+
