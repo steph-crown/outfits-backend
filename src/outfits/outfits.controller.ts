@@ -1,4 +1,4 @@
-import { Body, Controller, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from 'src/auth/guards/auth.guard';
 import { User } from '../auth/decorators/user.decorator';
 import { User as UserEntity } from '../entities/user.entity';
@@ -16,6 +16,12 @@ export class OutfitsController {
         @User() user: UserEntity,
     ) {
         return this.outfitsService.create(user.id, createOutfitDto);
+    }
+
+
+    @Get()
+    async findAll(@User() user: UserEntity) {
+        return this.outfitsService.findAll(user.id);
     }
 
 
