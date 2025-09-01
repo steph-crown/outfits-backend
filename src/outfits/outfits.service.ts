@@ -2,11 +2,12 @@ import { GetObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { ConflictException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { plainToInstance } from 'class-transformer';
 import { Outfit } from 'src/entities/outfit.entity';
 import { OutfitMedia } from 'src/entities/outfit_media.entity';
 import { Tags } from 'src/entities/tag.entity';
 import { In, Repository } from 'typeorm';
-import { CreateOutfitDto, OutfitResponseDto } from './dto/outfit.dto';
+import { CreateOutfitDto, GetOutfitResponseDto, OutfitResponseDto } from './dto/outfit.dto';
 
 @Injectable()
 export class OutfitsService {
@@ -95,8 +96,15 @@ export class OutfitsService {
       })
     );
 
-    return {
+    const command = new GetObjectCommand({
+      Bucket: "outfits-app-bucket",
+      Key: savedOutfit.thumbnail_url,
+    });
+    const thumbnailUrl = await getSignedUrl(this.s3Client, command, { expiresIn: 3600 });
+
+    return plainToInstance(OutfitResponseDto, {
       ...savedOutfit,
+      thumbnail_url: thumbnailUrl,
       tags: savedTags.map(m => (m.name)),
       media: savedOutfitMedias.map(m => ({
         id: m.id,
@@ -108,10 +116,33 @@ export class OutfitsService {
         height: m.height,
         file_size: m.file_size
       })),
-    };
+    });
+  }
 
+  async findAll(userId: string): Promise<GetOutfitResponseDto[]> {
+    const outfits = await this.outfitRepository
+      .createQueryBuilder('outfit')
+      .leftJoinAndSelect('outfit.tags', 'tag') // still fetch tags
+      .where('outfit.user_id = :userId', { userId })
+      .orderBy('outfit.created_at', 'DESC')
+      .getMany();
 
+    await Promise.all(
+      outfits.map(async (outfit) => {
+        const command = new GetObjectCommand({
+          Bucket: "outfits-app-bucket",
+          Key: outfit.thumbnail_url,
+        });
+        outfit.thumbnail_url = await getSignedUrl(this.s3Client, command, { expiresIn: 3600 });
+      })
+    );
 
+    const transformed = outfits.map((o) => ({
+      ...o,
+      tags: o.tags.map((t) => t.name),
+    }));
+
+    return plainToInstance(OutfitResponseDto, transformed)
 
   }
 
