@@ -12,18 +12,18 @@ import {
   ValidationPipe,
 } from '@nestjs/common';
 import {
+  ApiBearerAuth,
   ApiBody,
   ApiOperation,
   ApiResponse,
   ApiTags,
-  ApiBearerAuth,
 } from '@nestjs/swagger';
 import { ApiSuccessResponse } from '../common/decorators/api-response.decorator';
-import { JwtAuthGuard } from './guards/auth.guard';
-import { User } from './decorators/user.decorator';
-import { AuthService } from './auth.service';
-import { LoginDto, RegisterDto, UpdateUserDto } from './dto/auth.dto';
 import { User as UserEntity } from '../entities/user.entity';
+import { AuthService } from './auth.service';
+import { User } from './decorators/user.decorator';
+import { LoginDto, RegisterDto, UpdateUserDto } from './dto/auth.dto';
+import { JwtAuthGuard } from './guards/auth.guard';
 
 @ApiTags('Authentication')
 @Controller('auth')
