@@ -96,23 +96,17 @@ export class OutfitResponseDto {
   @IsString()
   id: string;
 
-  @IsString()
-  user_id: string;
-
   @IsUrl()
   source_url: string;
 
   @IsString()
   source_type: string;
 
-  @IsOptional()
   @IsString()
-  original_text?: string;
+  original_text: string;
 
-  @IsOptional()
-  @IsArray()
-  @IsString({ each: true })
-  user_tags?: string[];
+  @IsString()
+  thumbnail_url: string;
 
   @IsOptional()
   @IsArray()
