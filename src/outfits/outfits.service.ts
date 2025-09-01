@@ -1,6 +1,6 @@
 import { GetObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
-import { ConflictException, Injectable } from '@nestjs/common';
+import { ConflictException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { plainToInstance } from 'class-transformer';
 import { Outfit } from 'src/entities/outfit.entity';
@@ -144,6 +144,28 @@ export class OutfitsService {
 
     return plainToInstance(OutfitResponseDto, transformed)
 
+  }
+
+
+  async findOne(id: string, userId: string): Promise<GetOutfitResponseDto> {
+    const outfit = await this.outfitRepository.findOne({
+      where: { id },
+      relations: ["tags"],
+    });
+
+    if (!outfit) {
+      throw new NotFoundException('outfit not found');
+    }
+
+    // Check if user owns this collection or if it's public
+    if (outfit.user_id !== userId) {
+      throw new ForbiddenException('Access denied to this outfit');
+    }
+
+    return plainToInstance(OutfitResponseDto, {
+      ...outfit,
+      tags: outfit.tags.map((t) => t.name),
+    });
   }
 
 
