@@ -178,3 +178,31 @@ export class GetOutfitResponseDto {
 
 }
 
+export class UpdateOutfitDto {
+  @IsOptional()
+  @IsUrl()
+  source_url?: string;
+
+  @IsOptional()
+  @IsString()
+  source_type?: string;
+
+  @IsOptional()
+  @IsString()
+  original_text?: string;
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  colors?: string[];
+
+  @IsOptional()
+  @IsString()
+  style_category?: string;
+
+  @IsOptional()
+  @IsString()
+  note?: string;
+
+}
+
