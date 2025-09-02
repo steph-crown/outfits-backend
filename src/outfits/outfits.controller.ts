@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, ParseUUIDPipe, Patch, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, ParseUUIDPipe, Patch, Post, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from 'src/auth/guards/auth.guard';
 import { User } from '../auth/decorators/user.decorator';
 import { User as UserEntity } from '../entities/user.entity';
@@ -42,6 +42,15 @@ export class OutfitsController {
     ) {
         return this.outfitsService.update(id, user.id, updateOutfitDto);
     }
+
+    @Delete(':id')
+      async remove(
+        @Param('id', ParseUUIDPipe) id: string,
+        @User() user: UserEntity,
+      ) {
+        await this.outfitsService.remove(id, user.id);
+        return null;
+      }
 
 
 }
