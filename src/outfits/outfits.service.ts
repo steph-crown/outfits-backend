@@ -210,6 +210,20 @@ export class OutfitsService {
 
   }
 
+  async remove(id: string, userId: string): Promise<void> {
+    const outfit = await this.outfitRepository.findOne({
+      where: { id },
+      relations: ["tags"],
+    });
+
+    // Only the owner can delete
+    if (outfit.user_id !== userId) {
+      throw new ForbiddenException('You can only delete your own outfits');
+    }
+
+    await this.outfitRepository.remove(outfit);
+  }
+
 
 
 
