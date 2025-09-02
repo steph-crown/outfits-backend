@@ -7,7 +7,7 @@ import { Outfit } from 'src/entities/outfit.entity';
 import { OutfitMedia } from 'src/entities/outfit_media.entity';
 import { Tags } from 'src/entities/tag.entity';
 import { In, Repository } from 'typeorm';
-import { CreateOutfitDto, GetOutfitResponseDto, OutfitResponseDto } from './dto/outfit.dto';
+import { CreateOutfitDto, GetOutfitResponseDto, OutfitResponseDto, UpdateOutfitDto } from './dto/outfit.dto';
 
 @Injectable()
 export class OutfitsService {
@@ -162,11 +162,56 @@ export class OutfitsService {
       throw new ForbiddenException('Access denied to this outfit');
     }
 
+    const command = new GetObjectCommand({
+      Bucket: "outfits-app-bucket",
+      Key: outfit.thumbnail_url,
+    });
+    outfit.thumbnail_url = await getSignedUrl(this.s3Client, command, { expiresIn: 3600 });
+
     return plainToInstance(OutfitResponseDto, {
       ...outfit,
       tags: outfit.tags.map((t) => t.name),
     });
   }
+
+
+  async update(
+    id: string,
+    userId: string,
+    updateOutfitDto: UpdateOutfitDto,
+  ): Promise<GetOutfitResponseDto> {
+    const outfit = await this.outfitRepository.findOne({
+      where: { id },
+      relations: ["tags"],
+    });
+
+    if (!outfit) {
+      throw new NotFoundException('outfit not found');
+    }
+
+    // Only the owner can update
+    if (outfit.user_id !== userId) {
+      throw new ForbiddenException('You can only update your own outfit');
+    }
+
+    Object.assign(outfit, updateOutfitDto);
+    const updatedOutfit = await this.outfitRepository.save(outfit);
+
+    const command = new GetObjectCommand({
+      Bucket: "outfits-app-bucket",
+      Key: updatedOutfit.thumbnail_url,
+    });
+    updatedOutfit.thumbnail_url = await getSignedUrl(this.s3Client, command, { expiresIn: 3600 });
+
+    return plainToInstance(GetOutfitResponseDto, {
+      ...updatedOutfit,
+      tags: updatedOutfit.tags.map((t) => t.name),
+    });
+
+  }
+
+
+
 
 
 }
