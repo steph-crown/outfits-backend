@@ -10,6 +10,7 @@ import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 import { ResponseInterceptor } from './common/interceptors/response.interceptor';
 import { FileModule } from './file/file.module';
 import { OutfitsModule } from './outfits/outfits.module';
+import { InstagramModule } from './instagram/instagram.module';
 
 @Module({
   imports: [
@@ -29,6 +30,7 @@ import { OutfitsModule } from './outfits/outfits.module';
     CollectionsModule,
     OutfitsModule,
     FileModule,
+    InstagramModule,
   ],
   controllers: [AppController],
   providers: [
