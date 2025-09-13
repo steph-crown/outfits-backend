@@ -1,8 +1,8 @@
-# SaveFits - Product Requirements Document
+# Outfits - Product Requirements Document
 
 ## Executive Summary
 
-**Product Name:** SaveFits
+**Product Name:** Outfits
 **Mission:** Save outfit inspiration from anywhere, organize in collections, find with smart search
 **Target:** Gen Z & Millennials (18-34) who save outfit inspiration across social platforms
 **Timeline:** 2-month solo development MVP
@@ -23,7 +23,7 @@ Users save outfit inspiration across multiple platforms (TikTok, Instagram, Pint
 
 ### 1.2 Solution
 
-SaveFits provides a centralized platform to:
+Outfits provides a centralized platform to:
 
 - Save outfits from any social platform via share extensions
 - Auto-organize with AI-powered analysis
@@ -50,7 +50,7 @@ SaveFits provides a centralized platform to:
 
 ### 2.2 Core Use Cases
 
-1. **Quick Save:** Share TikTok outfit → SaveFits processes → Back to TikTok (15 seconds)
+1. **Quick Save:** Share TikTok outfit → Outfits processes → Back to TikTok (15 seconds)
 2. **Organization:** Group outfits into "Work," "Date Night," "Casual" collections
 3. **Discovery:** Search "red dress casual" → Find relevant saved outfits
 4. **Inspiration:** Browse collection before shopping/getting dressed
@@ -138,7 +138,7 @@ SaveFits provides a centralized platform to:
 - Outfit recommendations based on saved content
 - Social sharing and community features
 - Wishlist functionality
-- Advanced analytics (SaveFits Wrapped)
+- Advanced analytics (Outfits Wrapped)
 
 ---
 
@@ -358,17 +358,17 @@ POST / webhooks / upload - complete; // File upload completion
 #### Primary Flow: Save from TikTok
 
 ```
-TikTok → Share → SaveFits → "Saving..." → Back to TikTok
+TikTok → Share → Outfits → "Saving..." → Back to TikTok
                     ↓
             (Background processing)
                     ↓
-Open SaveFits → See "Ready" outfit → View/Organize
+Open Outfits → See "Ready" outfit → View/Organize
 ```
 
 #### Secondary Flow: Browse & Search
 
 ```
-Open SaveFits → Browse grid → Search bar → Results → Full view
+Open Outfits → Browse grid → Search bar → Results → Full view
 ```
 
 ### 6.3 Share Extension Design
@@ -484,7 +484,7 @@ Open SaveFits → Browse grid → Search bar → Results → Full view
 
 - Premium features (unlimited saves, advanced search)
 - Shopping partnerships and affiliate links
-- SaveFits Wrapped annual feature
+- Outfits Wrapped annual feature
 
 ---
 
