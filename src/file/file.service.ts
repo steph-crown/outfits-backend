@@ -1,5 +1,4 @@
-import { GetObjectCommand, PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
-import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
+import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { v4 as uuid } from 'uuid';
@@ -14,7 +13,7 @@ export class FileService {
         });
     }
 
-    async uploadMultiple(files: { fileName: string; file: Buffer; fileType: string }[]): Promise<{ object_name: string; signed_url: string }[]> {
+    async uploadMultiple(files: { fileName: string; file: Buffer; fileType: string }[]): Promise<{ object_name: string; object_url: string }[]> {
         const uploadPromises = files.map(async ({ fileName, file, fileType }) => {
 
             const ext = fileName.split('.').pop();
@@ -22,7 +21,7 @@ export class FileService {
 
             await this.s3Client.send(
                 new PutObjectCommand({
-                    Bucket: "outfits-app-bucket",
+                    Bucket: "outfits-media-bucket",
                     Key: object_name,
                     Body: file,
                     ContentType: fileType,
@@ -30,13 +29,11 @@ export class FileService {
                 }),
             );
 
-            const command = new GetObjectCommand({
-                Bucket: 'outfits-app-bucket',
-                Key: object_name,
-            });
-            const signed_url = await getSignedUrl(this.s3Client, command, { expiresIn: 3600 });
+            const region = await this.s3Client.config.region(); 
 
-            return { object_name, signed_url }
+            const object_url = `https://outfits-media-bucket.s3.${region}.amazonaws.com/${object_name}`
+
+            return { object_name, object_url }
 
         });
 
