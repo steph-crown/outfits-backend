@@ -3,7 +3,7 @@ import { IsArray, IsBoolean, IsNumber, IsOptional, IsString, IsUrl, ValidateNest
 
 export class OutfitMediaDto {
   @IsString()
-  media_name: string;
+  media_url: string;
 
   @IsString()
   media_type: 'image' | 'video';
