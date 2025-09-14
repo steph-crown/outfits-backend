@@ -36,7 +36,7 @@ export class OutfitsService {
       user_id: userId,
       source_url: createOutfitDto.source_url,
       source_type: createOutfitDto.source_url,
-      thumbnail_url: primaryMedia.media_name,
+      thumbnail_url: primaryMedia.media_url,
       original_text: createOutfitDto.original_text,
       colors: createOutfitDto.colors,
       style_category: createOutfitDto.style_category,
@@ -46,7 +46,7 @@ export class OutfitsService {
 
     const medias = createOutfitDto.media.map(media => ({
       outfit_id: savedOutfit.id,
-      media_name: media.media_name,
+      media_url: media.media_url,
       media_type: media.media_type,
       is_primary: media.is_primary,
       order_index: media.order_index,
@@ -86,29 +86,12 @@ export class OutfitsService {
     tagOutfit.tags.push(...savedTags);
     await this.outfitRepository.save(tagOutfit);
 
-    await Promise.all(
-      savedOutfitMedias.map(async (media) => {
-        const command = new GetObjectCommand({
-          Bucket: "outfits-app-bucket",
-          Key: media.media_name,
-        });
-        media.media_name = await getSignedUrl(this.s3Client, command, { expiresIn: 3600 });
-      })
-    );
-
-    const command = new GetObjectCommand({
-      Bucket: "outfits-app-bucket",
-      Key: savedOutfit.thumbnail_url,
-    });
-    const thumbnailUrl = await getSignedUrl(this.s3Client, command, { expiresIn: 3600 });
-
     return plainToInstance(OutfitResponseDto, {
       ...savedOutfit,
-      thumbnail_url: thumbnailUrl,
       tags: savedTags.map(m => (m.name)),
       media: savedOutfitMedias.map(m => ({
         id: m.id,
-        media_url: m.media_name, // signed URL
+        media_url: m.media_url, // signed URL
         media_type: m.media_type,
         is_primary: m.is_primary,
         order_index: m.order_index,
