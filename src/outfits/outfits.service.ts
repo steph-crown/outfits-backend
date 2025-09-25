@@ -1,5 +1,4 @@
-import { GetObjectCommand, S3Client } from '@aws-sdk/client-s3';
-import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
+import { S3Client } from '@aws-sdk/client-s3';
 import { ConflictException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { plainToInstance } from 'class-transformer';
@@ -109,21 +108,16 @@ export class OutfitsService {
       .where('outfit.user_id = :userId', { userId })
       .orderBy('outfit.created_at', 'DESC')
       .getMany();
-
-    await Promise.all(
-      outfits.map(async (outfit) => {
-        const command = new GetObjectCommand({
-          Bucket: "outfits-app-bucket",
-          Key: outfit.thumbnail_url,
-        });
-        outfit.thumbnail_url = await getSignedUrl(this.s3Client, command, { expiresIn: 3600 });
-      })
+    
+    const transformed = await Promise.all(
+      outfits.map(async (o) => ({
+        ...o,
+        tags: o.tags.map((t) => t.name),
+        media: await this.outfitMediaRepository.find({
+          where: { outfit_id: o.id }, // use o.id, not outfits.id
+        }),
+      })),
     );
-
-    const transformed = outfits.map((o) => ({
-      ...o,
-      tags: o.tags.map((t) => t.name),
-    }));
 
     return plainToInstance(OutfitResponseDto, transformed)
 
@@ -145,18 +139,16 @@ export class OutfitsService {
       throw new ForbiddenException('Access denied to this outfit');
     }
 
-    const command = new GetObjectCommand({
-      Bucket: "outfits-app-bucket",
-      Key: outfit.thumbnail_url,
+    const media = await this.outfitMediaRepository.find({
+      where: { outfit_id: id },
     });
-    outfit.thumbnail_url = await getSignedUrl(this.s3Client, command, { expiresIn: 3600 });
 
-    return plainToInstance(OutfitResponseDto, {
+    return plainToInstance(GetOutfitResponseDto, {
       ...outfit,
       tags: outfit.tags.map((t) => t.name),
+      media: media
     });
   }
-
 
   async update(
     id: string,
@@ -180,15 +172,15 @@ export class OutfitsService {
     Object.assign(outfit, updateOutfitDto);
     const updatedOutfit = await this.outfitRepository.save(outfit);
 
-    const command = new GetObjectCommand({
-      Bucket: "outfits-app-bucket",
-      Key: updatedOutfit.thumbnail_url,
+    const media = await this.outfitMediaRepository.find({
+      where: { outfit_id: id },
     });
-    updatedOutfit.thumbnail_url = await getSignedUrl(this.s3Client, command, { expiresIn: 3600 });
+
 
     return plainToInstance(GetOutfitResponseDto, {
       ...updatedOutfit,
       tags: updatedOutfit.tags.map((t) => t.name),
+      media: media
     });
 
   }
