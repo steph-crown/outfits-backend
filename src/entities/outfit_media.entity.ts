@@ -19,7 +19,7 @@ export class OutfitMedia {
     outfit: Outfit;
 
     @Column({ type: "varchar" })
-    media_name: string;
+    media_url: string;
 
     @Column({ type: "varchar" })
     media_type: string; // validated in DTO ('image' | 'video')

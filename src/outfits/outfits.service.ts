@@ -1,5 +1,4 @@
-import { GetObjectCommand, S3Client } from '@aws-sdk/client-s3';
-import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
+import { S3Client } from '@aws-sdk/client-s3';
 import { ConflictException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { plainToInstance } from 'class-transformer';
@@ -7,7 +6,7 @@ import { Outfit } from 'src/entities/outfit.entity';
 import { OutfitMedia } from 'src/entities/outfit_media.entity';
 import { Tags } from 'src/entities/tag.entity';
 import { In, Repository } from 'typeorm';
-import { CreateOutfitDto, GetOutfitResponseDto, OutfitResponseDto } from './dto/outfit.dto';
+import { CreateOutfitDto, GetOutfitResponseDto, OutfitResponseDto, UpdateOutfitDto } from './dto/outfit.dto';
 
 @Injectable()
 export class OutfitsService {
@@ -36,7 +35,7 @@ export class OutfitsService {
       user_id: userId,
       source_url: createOutfitDto.source_url,
       source_type: createOutfitDto.source_url,
-      thumbnail_url: primaryMedia.media_name,
+      thumbnail_url: primaryMedia.media_url,
       original_text: createOutfitDto.original_text,
       colors: createOutfitDto.colors,
       style_category: createOutfitDto.style_category,
@@ -46,7 +45,7 @@ export class OutfitsService {
 
     const medias = createOutfitDto.media.map(media => ({
       outfit_id: savedOutfit.id,
-      media_name: media.media_name,
+      media_url: media.media_url,
       media_type: media.media_type,
       is_primary: media.is_primary,
       order_index: media.order_index,
@@ -86,29 +85,12 @@ export class OutfitsService {
     tagOutfit.tags.push(...savedTags);
     await this.outfitRepository.save(tagOutfit);
 
-    await Promise.all(
-      savedOutfitMedias.map(async (media) => {
-        const command = new GetObjectCommand({
-          Bucket: "outfits-app-bucket",
-          Key: media.media_name,
-        });
-        media.media_name = await getSignedUrl(this.s3Client, command, { expiresIn: 3600 });
-      })
-    );
-
-    const command = new GetObjectCommand({
-      Bucket: "outfits-app-bucket",
-      Key: savedOutfit.thumbnail_url,
-    });
-    const thumbnailUrl = await getSignedUrl(this.s3Client, command, { expiresIn: 3600 });
-
     return plainToInstance(OutfitResponseDto, {
       ...savedOutfit,
-      thumbnail_url: thumbnailUrl,
       tags: savedTags.map(m => (m.name)),
       media: savedOutfitMedias.map(m => ({
         id: m.id,
-        media_url: m.media_name, // signed URL
+        media_url: m.media_url, // signed URL
         media_type: m.media_type,
         is_primary: m.is_primary,
         order_index: m.order_index,
@@ -126,21 +108,16 @@ export class OutfitsService {
       .where('outfit.user_id = :userId', { userId })
       .orderBy('outfit.created_at', 'DESC')
       .getMany();
-
-    await Promise.all(
-      outfits.map(async (outfit) => {
-        const command = new GetObjectCommand({
-          Bucket: "outfits-app-bucket",
-          Key: outfit.thumbnail_url,
-        });
-        outfit.thumbnail_url = await getSignedUrl(this.s3Client, command, { expiresIn: 3600 });
-      })
+    
+    const transformed = await Promise.all(
+      outfits.map(async (o) => ({
+        ...o,
+        tags: o.tags.map((t) => t.name),
+        media: await this.outfitMediaRepository.find({
+          where: { outfit_id: o.id }, // use o.id, not outfits.id
+        }),
+      })),
     );
-
-    const transformed = outfits.map((o) => ({
-      ...o,
-      tags: o.tags.map((t) => t.name),
-    }));
 
     return plainToInstance(OutfitResponseDto, transformed)
 
@@ -162,11 +139,68 @@ export class OutfitsService {
       throw new ForbiddenException('Access denied to this outfit');
     }
 
-    return plainToInstance(OutfitResponseDto, {
+    const media = await this.outfitMediaRepository.find({
+      where: { outfit_id: id },
+    });
+
+    return plainToInstance(GetOutfitResponseDto, {
       ...outfit,
       tags: outfit.tags.map((t) => t.name),
+      media: media
     });
   }
+
+  async update(
+    id: string,
+    userId: string,
+    updateOutfitDto: UpdateOutfitDto,
+  ): Promise<GetOutfitResponseDto> {
+    const outfit = await this.outfitRepository.findOne({
+      where: { id },
+      relations: ["tags"],
+    });
+
+    if (!outfit) {
+      throw new NotFoundException('outfit not found');
+    }
+
+    // Only the owner can update
+    if (outfit.user_id !== userId) {
+      throw new ForbiddenException('You can only update your own outfit');
+    }
+
+    Object.assign(outfit, updateOutfitDto);
+    const updatedOutfit = await this.outfitRepository.save(outfit);
+
+    const media = await this.outfitMediaRepository.find({
+      where: { outfit_id: id },
+    });
+
+
+    return plainToInstance(GetOutfitResponseDto, {
+      ...updatedOutfit,
+      tags: updatedOutfit.tags.map((t) => t.name),
+      media: media
+    });
+
+  }
+
+  async remove(id: string, userId: string): Promise<void> {
+    const outfit = await this.outfitRepository.findOne({
+      where: { id },
+      relations: ["tags"],
+    });
+
+    // Only the owner can delete
+    if (outfit.user_id !== userId) {
+      throw new ForbiddenException('You can only delete your own outfits');
+    }
+
+    await this.outfitRepository.remove(outfit);
+  }
+
+
+
 
 
 }
